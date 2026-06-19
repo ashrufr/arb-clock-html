@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>السَّاعَةُ الآنَ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: linear-gradient(135deg, #0c0c1a 0%, #1a1a2e 50%, #16213e 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Amiri', 'Noto Naskh Arabic', serif;
+  padding: 20px;
+}
+.container {
+  background: radial-gradient(ellipse at center, rgba(255,215,0,0.05) 0%, transparent 70%);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 24px;
+  padding: 60px 50px;
+  max-width: 800px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 0 60px rgba(255,215,0,0.05), inset 0 0 60px rgba(255,215,0,0.02);
+}
+.container::before, .container::after {
+  content: '\2726';
+  position: absolute;
+  font-size: 14px;
+  color: rgba(255,215,0,0.3);
+}
+.container::before { top: 20px; right: 30px; }
+.container::after { bottom: 20px; left: 30px; }
+.location-display {
+  font-size: 1.1rem;
+  color: rgba(255,215,0,0.45);
+  margin-bottom: 24px;
+  min-height: 1.6em;
+}
+.time-display {
+  font-size: 2.8rem;
+  color: #ffd700;
+  line-height: 1.8;
+  text-shadow: 0 0 30px rgba(255,215,0,0.12);
+  margin-bottom: 16px;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  word-spacing: 6px;
+  letter-spacing: 0.5px;
+}
+.date-display {
+  font-size: 1.3rem;
+  color: rgba(255,215,0,0.5);
+  margin-top: 8px;
+  letter-spacing: 1px;
+}
+.period {
+  font-size: 1rem;
+  color: rgba(255,215,0,0.4);
+  margin-top: 20px;
+}
+.separator {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,215,0,0.3), transparent);
+  margin: 16px auto;
+}
+@media (max-width: 500px) {
+  .container { padding: 40px 20px; }
+  .time-display { font-size: 1.6rem; }
+  .date-display { font-size: 1rem; }
+  .location-display { font-size: 0.95rem; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="location-display" id="locationDisplay"></div>
+  <div class="time-display" id="timeDisplay">—</div>
+  <div class="separator"></div>
+  <div class="date-display" id="dateDisplay"></div>
+  <div class="period" id="periodDisplay"></div>
+</div>
+<script>
+const cityTranslations = {
+  'New_York': 'نْيُويُورْك',
+  'Los_Angeles': 'لُوسْ أَنْجِلِس',
+  'Chicago': 'شِيكَاغُو',
+  'Toronto': 'تُورُونْتُو',
+  'London': 'لَنْدَن',
+  'Paris': 'بَارِيس',
+  'Berlin': 'بِرْلِين',
+  'Madrid': 'مَدْرِيد',
+  'Rome': 'رُومَا',
+  'Moscow': 'مُوسْكُو',
+  'Istanbul': 'إِسْطَنْبُول',
+  'Dubai': 'دُبَيّ',
+  'Abu_Dhabi': 'أَبُو ظَبْي',
+  'Riyadh': 'الرِّيَاض',
+  'Jeddah': 'جُدَّة',
+  'Mecca': 'مَكَّة',
+  'Cairo': 'الْقَاهِرَة',
+  'Alexandria': 'الْإِسْكَنْدَرِيَّة',
+  'Algiers': 'الْجَزَائِر',
+  'Tunis': 'تُونِس',
+  'Casablanca': 'الدَّار الْبَيْضَاء',
+  'Rabat': 'الرِّبَاط',
+  'Khartoum': 'الْخَرْطُوم',
+  'Baghdad': 'بَغْدَاد',
+  'Damascus': 'دِمَشْق',
+  'Beirut': 'بَيْرُوت',
+  'Amman': 'عَمَّان',
+  'Jerusalem': 'الْقُدْس',
+  'Gaza': 'غَزَّة',
+  'Kuwait': 'الْكُوَيْت',
+  'Doha': 'الدَّوْحَة',
+  'Manama': 'الْمَنَامَة',
+  'Muscat': 'مَسْقَط',
+  'Sanaa': 'صَنْعَاء',
+  'Tehran': 'طِهْرَان',
+  'Kolkata': 'كَلْكَتَّا',
+  'Mumbai': 'مُمْبַי',
+  'Delhi': 'دِلْهِي',
+  'Karachi': 'كَرَاتْشِي',
+  'Lahore': 'لَاهُور',
+  'Dhaka': 'دَكَّا',
+  'Jakarta': 'جَاكَرْتَا',
+  'Manila': 'مَانِيلَا',
+  'Shanghai': 'شَنْغَهَاي',
+  'Beijing': 'بِكِين',
+  'Tokyo': 'طُوكْيُو',
+  'Seoul': 'سُول',
+  'Singapore': 'سِنْغَافُورَة',
+  'Sydney': 'سِيدْنِي',
+  'Melbourne': 'مِلْبُورْن',
+  'Auckland': 'أُوكْلَانْد',
+  'Johannesburg': 'جُوهَانْسْبُرْغ',
+  'Nairobi': 'نَيْرُوبِي',
+  'Lagos': 'لَاغُوس',
+  'Accra': 'أَكْرَا',
+  'Brasilia': 'بْرَازِيلِيَا',
+  'Buenos_Aires': 'بُوَيْنِس آيِرِس',
+  'Santiago': 'سَانْتِيَاغُو',
+  'Mexico_City': 'مَكْسِيكُو',
+  'Panama': 'بَنَمَا',
+  'Havana': 'هَافَانَا',
+  'Stockholm': 'سْتُوكْهُولْم',
+  'Oslo': 'أُوسْلُو',
+  'Copenhagen': 'كُوبِنْهَاغِن',
+  'Brussels': 'بْرُوكْسِيل',
+  'Vienna': 'فِينَا',
+  'Zurich': 'زُورِيخ',
+  'Geneva': 'جِنِيف',
+  'Athens': 'أَثِينَا',
+  'Bucharest': 'بُوكَارِسْت',
+  'Warsaw': 'وَارْسُو',
+  'Prague': 'بْرَاغ',
+  'Budapest': 'بُودَابِسْت',
+  'Sofia': 'صُوفِيَا',
+  'Belgrade': 'بِلْغْرَاد',
+  'Tirana': 'تِيرَانَا',
+  'Helsinki': 'هَلْسِنْكِي',
+  'Reykjavik': 'رَيْكْيَافِيك',
+  'Dublin': 'دُوبْلِن',
+  'Lisbon': 'لِشْبُونَة',
+  'Kampala': 'كَمْبَالَا',
+  'Addis_Ababa': 'أَدِيس أَبَابَا',
+  'Dar_es_Salaam': 'دَار السَّلَام',
+  'Rabat': 'الرِّبَاط',
+  'Tripoli': 'طَرَابُلُس',
+  'Ankara': 'أَنْقَرَة',
+  'Ashgabat': 'عَشْقَابَاد',
+  'Tashkent': 'طَاشْكَنْد',
+  'Islamabad': 'إِسْلَامَآبَاد',
+  'Kabul': 'كَابُل',
+  'Bangkok': 'بَانْكُوك',
+  'Hanoi': 'هَانُوي',
+  'Kuala_Lumpur': 'كُوَالَا لُمْبُور',
+  'Taipei': 'تَايْبِه',
+  'Hong_Kong': 'هُونْغ كُونْغ',
+};
+
+const hourWords = [
+  '',
+  '',
+  'الثَّانِيَةُ',
+  'الثَّالِثَةُ',
+  'الرَّابِعَةُ',
+  'الْخَامِسَةُ',
+  'السَّادِسَةُ',
+  'السَّابِعَةُ',
+  'الثَّامِنَةُ',
+  'التَّاسِعَةُ',
+  'الْعَاشِرَةُ',
+  'الْحَادِيَةَ عَشْرَةَ',
+  'الثَّانِيَةَ عَشْرَةَ',
+  'الْوَاحِدَةُ'
+];
+
+const units = ['', 'وَاحِدَة', 'اثْنَتَانِ', 'ثَلَاثٌ', 'أَرْبَعٌ', 'خَمْسٌ', 'سِتٌّ', 'سَبْعٌ', 'ثَمَانٍ', 'تِسْعٌ'];
+const compUnits = ['', 'إِحْدَى', 'اثْنَتَانِ', 'ثَلَاثٌ', 'أَرْبَعٌ', 'خَمْسٌ', 'سِتٌّ', 'سَبْعٌ', 'ثَمَانٍ', 'تِسْعٌ'];
+const tensW = ['', '', 'عِشْرُونَ', 'ثَلَاثُونَ', 'أَرْبَعُونَ', 'خَمْسُونَ'];
+
+function minuteWords(n, prefixWa) {
+  const p = prefixWa ? 'وَ' : '';
+  if (n === 1) return p + 'دَقِيقَةٌ';
+  if (n === 2) return p + 'دَقِيقَتَانِ';
+  if (n <= 10) return p + units[n] + ' دَقَائِقَ';
+  if (n < 20) {
+    if (n === 11) return p + 'إِحْدَى عَشْرَةَ دَقِيقَةً';
+    if (n === 12) return p + 'اثْنَتَا عَشْرَةَ دَقِيقَةً';
+    return p + units[n % 10] + ' عَشْرَةَ دَقِيقَةً';
+  }
+  const t = Math.floor(n / 10);
+  const u = n % 10;
+  if (u === 0) return p + tensW[t] + ' دَقِيقَةً';
+  return p + compUnits[u] + ' وَ' + tensW[t] + ' دَقِيقَةً';
+}
+
+function getTimeInArabic(now) {
+  const h = now.getHours();
+  const m = now.getMinutes();
+  const period = h >= 12 ? 'مَسَاءً' : 'صَبَاحًا';
+  const h12 = h % 12 || 12;
+  const next = h12 === 12 ? 1 : h12 + 1;
+
+  if (m === 0) return { text: 'السَّاعَةُ ' + hourWords[h12] + ' تَمَامًا', period };
+  if (m === 15) return { text: 'السَّاعَةُ ' + hourWords[h12] + ' وَالرُّبْعُ', period };
+  if (m === 30) return { text: 'السَّاعَةُ ' + hourWords[h12] + ' وَالنِّصْفُ', period };
+  if (m === 45) return { text: 'السَّاعَةُ ' + hourWords[next] + ' إِلَّا الرُّبْعُ', period };
+  if (m > 30) {
+    const r = 60 - m;
+    return { text: 'السَّاعَةُ ' + hourWords[next] + ' إِلَّا ' + minuteWords(r, false), period };
+  }
+  return { text: 'السَّاعَةُ ' + hourWords[h12] + ' ' + minuteWords(m, true), period };
+}
+
+const dayNames = ['الْأَحَدُ', 'الْإِثْنَيْنُ', 'الثَّلَاثَاءُ', 'الْأَرْبِعَاءُ', 'الْخَمِيسُ', 'الْجُمُعَةُ', 'السَّبْتُ'];
+const monthNames = ['يَنَايِرُ', 'فِبْرَايِرُ', 'مَارِسُ', 'أَبْرِيلُ', 'مَايُو', 'يُونْيُو', 'يُولْيُو', 'أَغُسْطُسُ', 'سِبْتِمْبِرُ', 'أُكْتُوبِرُ', 'نُوفِمْبِرُ', 'دِيسِمْبِرُ'];
+
+function getArabicDate(now) {
+  return dayNames[now.getDay()] + '، ' + now.getDate() + ' ' + monthNames[now.getMonth()] + ' ' + now.getFullYear();
+}
+
+function getCityFromTZ() {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const parts = tz.split('/');
+  const raw = parts[parts.length - 1];
+  return cityTranslations[raw] || raw.replace(/_/g, ' ');
+}
+
+function getCountryFromTZ() {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const parts = tz.split('/');
+  if (parts.length >= 2) {
+    const region = parts[0].replace(/_/g, ' ');
+    const regionMap = {
+      'Africa': 'أَفْرِيقِيَا',
+      'America': 'أَمْرِيكَا',
+      'Asia': 'آسِيَا',
+      'Atlantic': 'الْمُحِيط الْأَطْلَسِيّ',
+      'Australia': 'أُسْتُرَالِيَا',
+      'Europe': 'أُورُوبَّا',
+      'Indian': 'الْمُحِيط الْهِنْدِيّ',
+      'Pacific': 'الْمُحِيط الْهَادِئ',
+    };
+    return regionMap[parts[0]] || region;
+  }
+  return '';
+}
+
+function getLocationString(city, country) {
+  if (city && country) return 'الْمَوْقِعُ: ' + city + '، ' + country;
+  if (city) return 'الْمَوْقِعُ: ' + city;
+  return city;
+}
+
+const locationEl = document.getElementById('locationDisplay');
+
+function initLocation() {
+  const city = getCityFromTZ();
+  const country = getCountryFromTZ();
+  locationEl.textContent = getLocationString(city, country);
+
+  if (!navigator.geolocation) return;
+
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try {
+      const res = await fetch(
+        'https://nominatim.openstreetmap.org/reverse?format=json&lat=' +
+        pos.coords.latitude + '&lon=' + pos.coords.longitude +
+        '&accept-language=ar',
+        { headers: { 'User-Agent': 'ArabicClock/1.0' } }
+      );
+      const data = await res.json();
+      const addr = data.address || {};
+      const geoCity = addr.city || addr.town || addr.village || addr.county || addr.state;
+      const geoCountry = addr.country;
+      if (geoCity) {
+        locationEl.textContent = getLocationString(geoCity, geoCountry);
+      }
+    } catch (_) {}
+  }, () => {});
+}
+
+function update() {
+  const now = new Date();
+  const { text, period } = getTimeInArabic(now);
+  document.getElementById('timeDisplay').textContent = text;
+  document.getElementById('dateDisplay').textContent = getArabicDate(now);
+  document.getElementById('periodDisplay').textContent = period;
+}
+
+initLocation();
+update();
+setInterval(update, 1000);
+</script>
+</body>
+</html>
